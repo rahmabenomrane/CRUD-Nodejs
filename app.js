@@ -4,9 +4,11 @@ import mongoose from "mongoose";
 import routerBooks from "./routes/booktask.js";
 import routerAuthors from "./routes/authortask.js"; // Importation de la route des auteurs
 
+import eventRoutes from "./routes/events.js";
 import routerCategories from "./routes/categorytask.js";
-
 //se connecter a la base
+const router = express.Router();
+
 mongoose
   .connect("mongodb://localhost:27017/books")
   .then(function () {
@@ -27,5 +29,8 @@ app.use("/api/books", routerBooks);
 app.use("/api/authors", routerAuthors); // Ajouter la route pour les auteurs
 
 app.use("/api/categories", routerCategories);
+
+// Utilisation des routes pour les événements
+app.use("/api/events", eventRoutes);
 export default app;
 

@@ -44,6 +44,66 @@ export const postbook = async (req, res) => {
     res.status(500).json({ message: "An error occurred", error });
   }
 };
+export const validateBook = (req, res, next) => {
+  const schema = Joi.object({
+    title: Joi.string().min(3).required(),
+    publishedYear: Joi.number()
+      .integer()
+      .min(1900)
+      .max(new Date().getFullYear())
+      .required(),
+    genre: Joi.string().min(3).required(),
+    author: Joi.string().required(), // Doit être un ObjectId valide
+    categories: Joi.array().items(Joi.string()), // Tableau d'ObjectId valides
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  next();
+};
+
+export const createValidatedBook = async (req, res) => {
+  try {
+    const { title, publishedYear, genre, author, categories } = req.body;
+
+    // Vérifier si l'auteur existe
+    const existingAuthor = await Author.findById(author);
+    if (!existingAuthor) {
+      return res.status(404).json({ message: "Auteur introuvable." });
+    }
+
+    // Vérifier si l'auteur a écrit d'autres livres
+    const previousBooks = await Book.find({ author });
+    if (previousBooks.length === 0) {
+      return res.status(400).json({
+        message: "L'auteur doit avoir écrit au moins un livre avant.",
+      });
+    }
+
+    // Création du livre
+    const newBook = new Book({
+      title,
+      publishedYear,
+      genre,
+      author,
+      categories,
+    });
+
+    await newBook.save();
+
+    res.status(201).json({
+      message: "Livre créé avec succès.",
+      book: newBook,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Obtenir les informations d'un livre avec son auteur
 export const getidbook = async (req, res) => {
   try {
